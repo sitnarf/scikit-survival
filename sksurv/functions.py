@@ -18,7 +18,7 @@ __all__ = ['StepFunction']
 
 
 class StepFunction:
-    """Callable step function.
+    """Callable step function. x can be infinite.
 
     .. math::
 
@@ -41,8 +41,8 @@ class StepFunction:
     """
     def __init__(self, x, y, a=1., b=0.):
         check_consistent_length(x, y)
-        self.x = x
-        self.y = y
+        self.x = np.concatenate([[-np.inf], x, [np.inf]])
+        self.y = np.concatenate([[y[0]], y, [y[-1]]])
         self.a = a
         self.b = b
 
@@ -60,8 +60,6 @@ class StepFunction:
             Values of step function at `x`.
         """
         x = np.atleast_1d(x)
-        if not np.isfinite(x).all():
-            raise ValueError("x must be finite")
         if np.min(x) < self.x[0] or np.max(x) > self.x[-1]:
             raise ValueError(
                 "x must be within [%f; %f]" % (self.x[0], self.x[-1]))
