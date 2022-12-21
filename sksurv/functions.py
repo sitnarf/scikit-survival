@@ -11,10 +11,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
+from typing import List
+
 import numpy as np
 from sklearn.utils import check_consistent_length
 
-__all__ = ['StepFunction']
+__all__ = ['StepFunction', 'sum_fn', 'avg_fn']
 
 
 class StepFunction:
@@ -83,3 +87,38 @@ class StepFunction:
                 and self.b == other.b
             )
         return False
+
+    def __add__(self, other) -> StepFunction:
+        if type(other) in [int, float] or np.isscalar(other):
+            return StepFunction(self.x, self.y + other)
+        elif type(other) != StepFunction:
+            raise TypeError(f"Cannot sum {type(self)} and {type(other)}.")
+        x = np.unique(np.sort(np.concatenate([other.x, self.x])))
+        y = self(x) + other(x)
+        return StepFunction(x, y)
+
+    def __mul__(self, other) -> StepFunction:
+        if type(other) not in [int, float] or not np.isscalar(other):
+            raise TypeError(f"Cannot multiply {type(self)} and {type(other)}.")
+        return StepFunction(self.x, self.y * other)
+
+    def __truediv__(self, other) -> StepFunction:
+        if type(other) not in [int, float] or not np.isscalar(other):
+            raise TypeError(f"Cannot divide {type(self)} and {type(other)}.")
+        return StepFunction(self.x, self.y / other)
+
+
+def sum_fn(fns: List[StepFunction]) -> StepFunction:
+    if len(fns) == 0:
+        raise RuntimeError("Empty list.")
+    if len(fns) == 1:
+        return fns[0]
+    return sum(fns[1:], start=fns[0])
+
+
+def avg_fn(fns: List[StepFunction]) -> StepFunction:
+    if len(fns) == 0:
+        raise RuntimeError("Empty list.")
+    if len(fns) == 1:
+        return fns[0]
+    return sum(fns[1:], start=fns[0]) / len(fns)

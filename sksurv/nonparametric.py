@@ -376,11 +376,10 @@ class SurvivalFunctionEstimator(BaseEstimator):
         check_is_fitted(self, "unique_time_")
         time = check_array(time, ensure_2d=False, estimator=self, input_name="time")
 
-        # K-M is undefined if estimate at last time point is non-zero
         extends = time > self.unique_time_[-1]
-        if self.prob_[-1] > 0 and extends.any():
-            raise ValueError("time must be smaller than largest "
-                             "observed time point: {}".format(self.unique_time_[-1]))
+        # if self.prob_[-1] > 0 and extends.any():
+        #     raise ValueError("time must be smaller than largest "
+        #                      "observed time point: {}".format(self.unique_time_[-1]))
 
         # beyond last time point is zero probability
         Shat = np.empty(time.shape, dtype=float)
@@ -445,9 +444,7 @@ class CensoringDistributionEstimator(SurvivalFunctionEstimator):
         """
         event, time = check_y_survival(y)
         Ghat = self.predict_proba(time[event])
-
-        if (Ghat == 0.0).any():
-            raise ValueError("censoring survival function is zero at one or more time points")
+        Ghat[Ghat == 0.0] += 1e-8
 
         weights = np.zeros(time.shape[0])
         weights[event] = 1.0 / Ghat
